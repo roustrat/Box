@@ -39,10 +39,12 @@ import androidx.navigation3.ui.NavDisplay
 import com.example.box.model.BoxViewModel
 import com.example.box.navigation.Home
 import com.example.box.navigation.ItemInfo
+import com.example.box.navigation.ScaledImage
 import com.example.box.navigation.Screen
 import com.example.box.screens.HomeScreen
 import com.example.box.screens.HomeScreenSetup
 import com.example.box.screens.SetupItemScreen
+import com.example.box.screens.ViewImage
 import com.example.box.ui.theme.AppTheme
 import kotlin.compareTo
 
@@ -125,7 +127,16 @@ fun BoxApp(viewModel: BoxViewModel) {
                 SetupItemScreen(
                     onNavigation = onNavigation,
                     itemId = key.itemId,
-                    viewModel = key.viewModel
+                    viewModel = key.viewModel,
+                    actionType = key.actionType
+                )
+            }
+            entry<ScaledImage>(
+                metadata = mapOf("Look" to "ScaledImage")
+            ) { key ->
+                ViewImage(
+                    bitmap = key.bitmap,
+                    description = key.description
                 )
             }
         }

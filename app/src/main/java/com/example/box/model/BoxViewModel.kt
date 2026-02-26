@@ -19,10 +19,27 @@ class BoxViewModel(application: Application): ViewModel() {
         }
     }
 
+    // Пока с !!
     fun givePlaceNameFromId(id: Int): String {
-        val list = PlaceList.value.filter {item ->
+        val list = PlaceList.value!!.filter { item ->
             item.id == id
         }
         return list[0].name
+    }
+
+    // Пока с !!
+    fun givePlaceFromId(id: Int): PlaceItem {
+        val list = PlaceList.value!!.filter { item ->
+            item.id == id
+        }
+        return list[0]
+    }
+
+    // Пока с !!
+    fun giveItemFromId(id: Int): Item {
+        val list = ItemList.value!!.filter { item ->
+            item.id == id
+        }
+        return list[0]
     }
 }

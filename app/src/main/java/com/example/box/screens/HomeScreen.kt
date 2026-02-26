@@ -51,6 +51,15 @@ import java.io.File
 //@Parcelize
 //class ItemP(val id: Int) : Parcelable
 
+private enum class ActionType(
+    val label: String,
+    val id: Int
+) {
+    NEW("New Item", 1),
+    EDIT("Edit Item", 2),
+    INFO("For info", 0)
+}
+
 @Composable
 fun HomeScreenSetup(
     onNavigation: (NavKey) -> Unit,
@@ -170,7 +179,12 @@ fun ItemList(
                     item = item,
                     onItemClick = { item ->
                         scope.launch {
-                            onNavigation(ItemInfo(itemId = item.id, viewModel = viewModel))
+                            onNavigation(
+                                ItemInfo(
+                                    itemId = item.id,
+                                    viewModel = viewModel,
+                                    ActionType.INFO.id),
+                                )
                         }
                     },
                     placeName = placeName
@@ -220,8 +234,8 @@ fun ItemListItem(
 // Понять как убрать
 @SuppressLint("ContextCastToActivity")
 @Composable
-fun ImageLoader(item: String, itemName: String, modifier: Modifier = Modifier) {
-    val photoFile = File(LocalContext.current.applicationContext.filesDir, item)
+fun ImageLoader(photoFileName: String, itemName: String, modifier: Modifier = Modifier) {
+    val photoFile = File(LocalContext.current.applicationContext.filesDir, photoFileName)
     if (photoFile.exists()) {
         val bitmap = getScaledBitmap(photoFile.path, LocalContext.current as Activity)
         Image(
