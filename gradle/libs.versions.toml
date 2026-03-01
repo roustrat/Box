@@ -21,6 +21,10 @@ fragmentKtx = "1.8.9"
 navigation3 = "1.0.0"
 runtime = "1.10.2"
 kotlinxSerializationJson = "1.6.0"
+#CameraX
+#https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
+camerax = "1.5.0-alpha06"
+accompanist = "0.37.2" # or whatever matches with your Compose version
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -55,6 +59,17 @@ androidx-navigation3-runtime = { module ="androidx.navigation3:navigation3-runti
 androidx-navigation3-ui = { module ="androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+#CameraX
+# Contains the basic camera functionality such as SurfaceRequest
+androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
+# Contains the CameraXViewfinder composable
+androidx-camera-compose = { module = "androidx.camera:camera-compose", version.ref = "camerax" }
+# Allows us to bind the camera preview to our UI lifecycle
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+# The specific camera implementation that renders the preview
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+# The helper library to grant the camera permission
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -36,7 +36,9 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.example.box.camerax.CameraPreviewContent
 import com.example.box.model.BoxViewModel
+import com.example.box.navigation.CameraX
 import com.example.box.navigation.Home
 import com.example.box.navigation.ItemInfo
 import com.example.box.navigation.ScaledImage
@@ -108,10 +110,16 @@ fun BoxApp(viewModel: BoxViewModel) {
         }
     }
 
+    val onBack: () -> Unit = {
+        while (backStack.size > 1) {
+            backStack.removeLast()
+        }
+    }
+
     NavDisplay(
         backStack = backStack,
         onBack = {
-            backStack.removeLastOrNull()
+            backStack.removeLast()
         },
         entryProvider = entryProvider {
             entry<Home>(
@@ -126,6 +134,7 @@ fun BoxApp(viewModel: BoxViewModel) {
             ) { key ->
                 SetupItemScreen(
                     onNavigation = onNavigation,
+                    onBack = onBack,
                     itemId = key.itemId,
                     viewModel = key.viewModel,
                     actionType = key.actionType
@@ -135,8 +144,16 @@ fun BoxApp(viewModel: BoxViewModel) {
                 metadata = mapOf("Look" to "ScaledImage")
             ) { key ->
                 ViewImage(
+                    onBack = onBack,
                     bitmap = key.bitmap,
                     description = key.description
+                )
+            }
+            entry<CameraX>(
+                metadata = mapOf("takePhoto" to "CameraX")
+            ) {
+                CameraPreviewContent(
+                    viewModel = viewModel
                 )
             }
         }

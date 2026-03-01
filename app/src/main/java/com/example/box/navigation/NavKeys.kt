@@ -15,6 +15,9 @@ data class ItemInfo(val itemId: Int, val viewModel: BoxViewModel, val actionType
 data class ScaledImage(val bitmap: Bitmap, val description: String) : NavKey
 
 @Serializable
+data class CameraX(val viewModel: BoxViewModel) : NavKey
+
+@Serializable
 data object Screen : NavKey
 
 

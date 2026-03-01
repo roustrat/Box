@@ -224,7 +224,6 @@ fun ItemListItem(
                     modifier = Modifier.padding(8.dp)
                 )
             }
-
             Spacer(modifier = Modifier.width(8.dp))
             ImageLoader(item.photoFileName, item.name, modifier = Modifier.size(75.dp))
         }

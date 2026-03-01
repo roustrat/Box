@@ -6,5 +6,5 @@ data class PlaceItem(
     val name: String,
     val id: Int = 0,
     val imgId: UUID = UUID.randomUUID(),
-    val origin: String
+    val originId: Int
 )

@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Box</string>
+    <string name="item_name">Название</string>
+    <string name="ItemPlace">Хранилище</string>
+    <string name="Origin">Местоположение</string>
+    <string name="properties">Свойства</string>
+    <string name="add_button">Добавить</string>
 </resources>
