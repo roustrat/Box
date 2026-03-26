@@ -19,7 +19,7 @@ fun getScaledBitmap(path: String, activity: Activity): Bitmap {
 }
 
 // Функция обработки фото для ручного масштабирования изображения
-fun getScaledBitmap(path: String, destWidth: Int, destHeight: Int): Bitmap {
+fun getScaledBitmap(path: String?, destWidth: Int, destHeight: Int): Bitmap {
     // Чтение размеров изображения на диске
     var options = BitmapFactory.Options()
     options.inJustDecodeBounds = true

@@ -1,12 +1,19 @@
 package com.example.box.camerax
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
 import android.widget.Toast
 import androidx.camera.compose.CameraXViewfinder
+import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.takePicture
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.lifecycle.awaitInstance
 import androidx.camera.viewfinder.compose.MutableCoordinateTransformer
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -19,15 +26,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.sharp.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,6 +65,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.delay
+import java.io.File
 import java.util.UUID
 
 
@@ -62,26 +76,48 @@ import java.util.UUID
 @Composable
 fun CameraPreviewScreen(
     modifier: Modifier = Modifier,
-    viewModel: BoxViewModel
+    cameraPreviewViewModel: CameraPreviewViewModel,
+    viewModel: BoxViewModel,
+    onBack: () -> Unit
 ) {
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
     val imageCaptureUseCase = remember { ImageCapture.Builder().build() }
+    var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     val context = LocalContext.current
     if (cameraPermissionState.status.isGranted) {
         Box{
             CameraPreviewContent(
                 modifier = modifier,
-                viewModel = viewModel
+                cameraPreviewViewModel = cameraPreviewViewModel
             )
+            IconButton(
+                onClick = {
+                    lensFacing =
+                        if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                            CameraSelector.LENS_FACING_FRONT
+                        } else CameraSelector.LENS_FACING_BACK
+                },
+                modifier = Modifier
+                    .offset(16.dp, 16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Sharp.Refresh,
+                    contentDescription = null
+                )
+            }
             Column(
                 modifier
                     .align(Alignment.BottomCenter)) {
                 Button(
-                    onClick = { takePhoto(
-                        imageCapture = imageCaptureUseCase,
-                        viewModel = viewModel,
-                        context = context
-                    ) }
+                    onClick = {
+                        cameraPreviewViewModel.takePhoto(
+                            viewModel = viewModel,
+                            context = context
+                        )
+                        onBack()
+                    },
+                    modifier = Modifier
+                        .padding(bottom = 40.dp)
                 ) {
                     Text("Take photo")
                 }
@@ -91,7 +127,10 @@ fun CameraPreviewScreen(
     } else {
 
         Column(
-            modifier = modifier.fillMaxSize().wrapContentSize().widthIn(max = 480.dp),
+            modifier = modifier
+                .fillMaxSize()
+                .wrapContentSize()
+                .widthIn(max = 480.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val textToShow = if (cameraPermissionState.status.shouldShowRationale) {
@@ -120,13 +159,13 @@ fun CameraPreviewScreen(
 @Composable
 fun CameraPreviewContent(
     modifier: Modifier = Modifier,
-    viewModel: BoxViewModel,
+    cameraPreviewViewModel: CameraPreviewViewModel,
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
 ) {
-    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
+    val surfaceRequest by cameraPreviewViewModel.surfaceRequest.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(lifecycleOwner) {
-        viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
+        cameraPreviewViewModel.bindToCamera(context.applicationContext, lifecycleOwner)
     }
 
     var autofocusRequest by remember { mutableStateOf(UUID.randomUUID() to Offset.Unspecified) }
@@ -151,10 +190,10 @@ fun CameraPreviewContent(
         CameraXViewfinder(
             surfaceRequest = request,
             coordinateTransformer = coordinateTransformer,
-            modifier = modifier.pointerInput(viewModel, coordinateTransformer) {
+            modifier = modifier.pointerInput(cameraPreviewViewModel, coordinateTransformer) {
                 detectTapGestures { tapCoords ->
                     with(coordinateTransformer) {
-                        viewModel.tapToFocus(tapCoords.transform())
+                        cameraPreviewViewModel.tapToFocus(tapCoords.transform())
                     }
                     autofocusRequest = UUID.randomUUID() to tapCoords
                 }
@@ -166,46 +205,12 @@ fun CameraPreviewContent(
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier
-                .offset { autofocusCoords.takeOrElse { Offset.Zero } .round() }
+                .offset { autofocusCoords.takeOrElse { Offset.Zero }.round() }
                 .offset((-24).dp, (-24).dp)
         ) {
-            Spacer(Modifier.border(2.dp, Color.White, CircleShape).size(48.dp))
+            Spacer(Modifier
+                .border(2.dp, Color.White, CircleShape)
+                .size(48.dp))
         }
     }
-}
-
-private fun takePhoto(
-    imageCapture: ImageCapture,
-    viewModel: BoxViewModel,
-    context: Context
-) {
-    // Get a stable reference of the modifiable image capture use case
-    val imageCapture: ImageCapture = imageCapture
-
-
-    val photoFile = viewModel.getPhotoFile(viewModel.getItemId())
-
-    // Create output options object which contains file + metadata
-    val outputOptions = ImageCapture.OutputFileOptions
-        .Builder(photoFile)
-        .build()
-
-    // Set up image capture listener, which is triggered after photo has
-    // been taken
-    imageCapture.takePicture(
-        outputOptions,
-        ContextCompat.getMainExecutor(context),
-        object : ImageCapture.OnImageSavedCallback {
-            override fun onError(exc: ImageCaptureException) {
-                Log.e("CameraX", "Photo capture failed: ${exc.message}", exc)
-            }
-
-            override fun onImageSaved(output: ImageCapture.OutputFileResults){
-
-                val msg = "Photo capture succeeded: ${output.savedUri}"
-                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                Log.d("CameraX", msg)
-            }
-        }
-    )
 }
